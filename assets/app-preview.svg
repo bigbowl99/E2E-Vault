@@ -1,0 +1,302 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+    <linearGradient id="sidebarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="accentEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#090e17"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="780" fill="#020617"/>
+
+  <!-- Window Frame -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="30" width="1140" height="720" rx="16" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="1.5"/>
+  </g>
+
+  <!-- Window Header / Titlebar -->
+  <g>
+    <!-- macOS style window dots -->
+    <circle cx="58" cy="56" r="6" fill="#ef4444"/>
+    <circle cx="78" cy="56" r="6" fill="#f59e0b"/>
+    <circle cx="98" cy="56" r="6" fill="#10b981"/>
+
+    <!-- App Brand -->
+    <rect x="130" y="42" width="28" height="28" rx="8" fill="url(#accentEmerald)"/>
+    <path d="M144 48 L151 52 C151 60 144 65 144 67 C144 65 137 60 137 52 Z" fill="#ffffff"/>
+    <text x="168" y="60" fill="#f8fafc" font-size="15" font-weight="700" class="font-sans">E2E-Vault</text>
+    <rect x="245" y="47" width="88" height="18" rx="9" fill="#064e3b" stroke="#047857" stroke-width="0.8"/>
+    <text x="254" y="60" fill="#34d399" font-size="9.5" font-weight="700" class="font-sans">DESKTOP GUARD</text>
+
+    <circle cx="348" cy="56" r="3.5" fill="#10b981"/>
+    <text x="358" y="60" fill="#64748b" font-size="11" class="font-sans">Clipboard Daemon Active</text>
+
+    <!-- Header Actions -->
+    <!-- Partner Selector -->
+    <rect x="710" y="44" width="145" height="26" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+    <text x="720" y="61" fill="#94a3b8" font-size="11" class="font-sans">Partner: <tspan fill="#34d399" font-weight="600">Alice (Dev Lead) ▾</tspan></text>
+
+    <!-- Contacts Button -->
+    <rect x="865" y="44" width="95" height="26" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="878" y="61" fill="#e2e8f0" font-size="11" font-weight="500" class="font-sans">👥 Contacts <tspan fill="#94a3b8">4</tspan></text>
+
+    <!-- Export Pubkey Button -->
+    <rect x="970" y="44" width="145" height="26" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+    <text x="984" y="61" fill="#a7f3d0" font-size="11" font-weight="600" class="font-sans">🔑 Export Public Key</text>
+
+    <!-- Quit Button -->
+    <rect x="1125" y="44" width="26" height="26" rx="6" fill="#450a0a" stroke="#7f1d1d" stroke-width="1"/>
+    <circle cx="1138" cy="57" r="5" fill="none" stroke="#f87171" stroke-width="1.5"/>
+    <line x1="1138" y1="52" x2="1138" y2="56" stroke="#f87171" stroke-width="1.5" stroke-linecap="round"/>
+
+    <line x1="30" y1="84" x2="1170" y2="84" stroke="#1e293b" stroke-width="1"/>
+  </g>
+
+  <!-- Navigation Tabs -->
+  <g>
+    <!-- Tab 1: Active Organizer -->
+    <rect x="50" y="96" width="215" height="34" rx="10" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+    <text x="68" y="118" fill="#34d399" font-size="12.5" font-weight="600" class="font-sans">🗂️ File Organizer &amp; Archive (8)</text>
+
+    <!-- Tab 2 -->
+    <rect x="275" y="96" width="175" height="34" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="290" y="118" fill="#94a3b8" font-size="12" font-weight="500" class="font-sans">🛡️ Text Encryptor &amp; Decrypt</text>
+
+    <!-- Tab 3 -->
+    <rect x="460" y="96" width="155" height="34" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="475" y="118" fill="#94a3b8" font-size="12" font-weight="500" class="font-sans">📦 Package .e2e File</text>
+
+    <!-- Tab 4 -->
+    <rect x="625" y="96" width="155" height="34" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="640" y="118" fill="#94a3b8" font-size="12" font-weight="500" class="font-sans">🗄️ All Vault History (14)</text>
+
+    <line x1="50" y1="140" x2="1150" y2="140" stroke="#1e293b" stroke-width="1"/>
+  </g>
+
+  <!-- Main Body Content (Dual Pane) -->
+  <!-- 1. Left Sidebar -->
+  <g>
+    <rect x="50" y="152" width="250" height="576" rx="12" fill="url(#sidebarGrad)" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Sidebar Section: Contacts -->
+    <text x="68" y="180" fill="#64748b" font-size="10.5" font-weight="700" class="font-sans" letter-spacing="0.5">BY PARTNER CONTACTS</text>
+
+    <!-- All Contacts item -->
+    <rect x="62" y="195" width="226" height="32" rx="8" fill="#1e293b"/>
+    <text x="76" y="215" fill="#e2e8f0" font-size="11.5" class="font-sans">🗂️ All Contacts</text>
+    <rect x="254" y="202" width="24" height="18" rx="4" fill="#0f172a"/>
+    <text x="263" y="215" fill="#94a3b8" font-size="10" class="font-mono">8</text>
+
+    <!-- Alice (Active) -->
+    <rect x="62" y="233" width="226" height="34" rx="8" fill="#059669" stroke="#10b981" stroke-width="1"/>
+    <text x="76" y="254" fill="#ffffff" font-size="12" font-weight="600" class="font-sans">👤 Alice (Dev Lead)</text>
+    <rect x="254" y="241" width="24" height="18" rx="4" fill="#064e3b"/>
+    <text x="263" y="254" fill="#6ee7b7" font-size="10" font-weight="700" class="font-mono">5</text>
+
+    <!-- Bob -->
+    <rect x="62" y="273" width="226" height="30" rx="8" fill="transparent"/>
+    <text x="76" y="293" fill="#cbd5e1" font-size="11.5" class="font-sans">👤 Bob (Ops Engineer)</text>
+    <text x="265" y="293" fill="#64748b" font-size="10" class="font-mono">2</text>
+
+    <!-- Charlie -->
+    <rect x="62" y="307" width="226" height="30" rx="8" fill="transparent"/>
+    <text x="76" y="327" fill="#cbd5e1" font-size="11.5" class="font-sans">👤 Charlie (Finance)</text>
+    <text x="265" y="327" fill="#64748b" font-size="10" class="font-mono">1</text>
+
+    <!-- Sidebar Section: Key Categories -->
+    <line x1="62" y1="350" x2="288" y2="350" stroke="#1e293b" stroke-width="1"/>
+    <text x="68" y="375" fill="#64748b" font-size="10.5" font-weight="700" class="font-sans" letter-spacing="0.5">BY KEY &amp; CATEGORY</text>
+
+    <text x="76" y="405" fill="#cbd5e1" font-size="11.5" class="font-sans">🤖 AI Keys (OpenAI, Gemini)</text>
+    <text x="76" y="437" fill="#cbd5e1" font-size="11.5" class="font-sans">☁️ Cloud (Aliyun, WeChat, AWS)</text>
+    <text x="76" y="469" fill="#cbd5e1" font-size="11.5" class="font-sans">🔑 SSH &amp; Private Keys</text>
+    <text x="76" y="501" fill="#cbd5e1" font-size="11.5" class="font-sans">📜 SSL / TLS Certificates</text>
+    <text x="76" y="533" fill="#cbd5e1" font-size="11.5" class="font-sans">⚙️ Configs (.yaml, .env)</text>
+
+    <!-- Bottom Action -->
+    <line x1="62" y1="650" x2="288" y2="650" stroke="#1e293b" stroke-width="1"/>
+    <rect x="62" y="666" width="226" height="36" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="100" y="688" fill="#e2e8f0" font-size="11.5" font-weight="600" class="font-sans">📂 Open Vault Folder</text>
+  </g>
+
+  <!-- 2. Right Workspace Area -->
+  <g>
+    <rect x="312" y="152" width="838" height="576" rx="12" fill="url(#sidebarGrad)" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Search & Filter Bar -->
+    <g>
+      <text x="332" y="180" fill="#94a3b8" font-size="12" class="font-sans">Vault Files / <tspan fill="#34d399" font-weight="600">👤 Alice (Dev Lead)'s File Timeline</tspan></text>
+      
+      <!-- Search Input -->
+      <rect x="800" y="165" width="260" height="30" rx="8" fill="#020617" stroke="#334155" stroke-width="1"/>
+      <text x="815" y="184" fill="#64748b" font-size="11" class="font-sans">🔍 Search keys, certs, names...</text>
+
+      <!-- View Switcher -->
+      <rect x="1070" y="165" width="65" height="30" rx="8" fill="#020617" stroke="#334155" stroke-width="1"/>
+      <rect x="1073" y="168" width="28" height="24" rx="6" fill="#1e293b"/>
+      <text x="1080" y="184" fill="#34d399" font-size="12">☰</text>
+      <text x="1112" y="184" fill="#64748b" font-size="12">⊞</text>
+
+      <line x1="332" y1="205" x2="1130" y2="205" stroke="#1e293b" stroke-width="1"/>
+    </g>
+
+    <!-- Timeline Group 1: Today -->
+    <g>
+      <circle cx="342" cy="228" r="4" fill="#10b981"/>
+      <text x="354" y="232" fill="#e2e8f0" font-size="12" font-weight="700" class="font-sans">📅 2026-08-28 (Today)</text>
+      <line x1="490" y1="228" x2="1120" y2="228" stroke="#1e293b" stroke-width="1"/>
+
+      <!-- File Card 1: db_root.pem (SSH/RSA Key) -->
+      <rect x="332" y="246" width="798" height="72" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+      
+      <!-- Icon -->
+      <rect x="346" y="258" width="48" height="48" rx="8" fill="#451a03" stroke="#d97706" stroke-width="0.8"/>
+      <text x="359" y="289" font-size="20">🔑</text>
+
+      <text x="406" y="273" fill="#f8fafc" font-size="13.5" font-weight="600" class="font-sans">db_root.pem</text>
+      <!-- Sniffer Badge -->
+      <rect x="500" y="260" width="148" height="20" rx="10" fill="#451a03" stroke="#b45309" stroke-width="0.8"/>
+      <text x="510" y="274" fill="#fbbf24" font-size="10" font-weight="700" class="font-sans">🔑 SSH / RSA 私钥 (Key)</text>
+
+      <!-- Sender Badge -->
+      <rect x="656" y="260" width="72" height="20" rx="10" fill="#0f172a" stroke="#334155" stroke-width="0.8"/>
+      <text x="664" y="274" fill="#60a5fa" font-size="10" font-weight="500" class="font-sans">👤 Alice</text>
+
+      <text x="406" y="296" fill="#64748b" font-size="11" class="font-mono">~/.e2e_vault/files/db_root.pem (2.4 KB)</text>
+
+      <!-- Action Buttons -->
+      <rect x="910" y="266" width="60" height="28" rx="6" fill="#064e3b" stroke="#059669" stroke-width="0.8"/>
+      <text x="922" y="284" fill="#a7f3d0" font-size="11" font-weight="600" class="font-sans">↗ Open</text>
+
+      <rect x="978" y="266" width="68" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="988" y="284" fill="#cbd5e1" font-size="11" class="font-sans">📂 Locate</text>
+
+      <rect x="1054" y="266" width="62" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="1063" y="284" fill="#cbd5e1" font-size="11" class="font-sans">📋 Copy</text>
+
+
+      <!-- File Card 2: aliyun_prod.env (Aliyun AK) -->
+      <rect x="332" y="328" width="798" height="72" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+      
+      <!-- Icon -->
+      <rect x="346" y="340" width="48" height="48" rx="8" fill="#431407" stroke="#ea580c" stroke-width="0.8"/>
+      <text x="359" y="371" font-size="20">☁️</text>
+
+      <text x="406" y="355" fill="#f8fafc" font-size="13.5" font-weight="600" class="font-sans">aliyun_prod.env</text>
+      <!-- Sniffer Badge -->
+      <rect x="525" y="342" width="138" height="20" rx="10" fill="#431407" stroke="#c2410c" stroke-width="0.8"/>
+      <text x="535" y="356" fill="#fdba74" font-size="10" font-weight="700" class="font-sans">☁️ 阿里云 AccessKey</text>
+
+      <!-- Sender Badge -->
+      <rect x="671" y="342" width="72" height="20" rx="10" fill="#0f172a" stroke="#334155" stroke-width="0.8"/>
+      <text x="679" y="356" fill="#60a5fa" font-size="10" font-weight="500" class="font-sans">👤 Alice</text>
+
+      <text x="406" y="378" fill="#64748b" font-size="11" class="font-mono">~/.e2e_vault/files/aliyun_prod.env (LTAI5t7... • 1.1 KB)</text>
+
+      <!-- Action Buttons -->
+      <rect x="910" y="348" width="60" height="28" rx="6" fill="#064e3b" stroke="#059669" stroke-width="0.8"/>
+      <text x="922" y="366" fill="#a7f3d0" font-size="11" font-weight="600" class="font-sans">↗ Open</text>
+
+      <rect x="978" y="348" width="68" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="988" y="366" fill="#cbd5e1" font-size="11" class="font-sans">📂 Locate</text>
+
+      <rect x="1054" y="348" width="62" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="1063" y="366" fill="#cbd5e1" font-size="11" class="font-sans">📋 Copy</text>
+    </g>
+
+    <!-- Timeline Group 2: Yesterday -->
+    <g>
+      <circle cx="342" cy="425" r="4" fill="#3b82f6"/>
+      <text x="354" y="429" fill="#e2e8f0" font-size="12" font-weight="700" class="font-sans">📅 2026-08-27 (Yesterday)</text>
+      <line x1="510" y1="425" x2="1120" y2="425" stroke="#1e293b" stroke-width="1"/>
+
+      <!-- File Card 3: openai_agent.json (ChatGPT Key) -->
+      <rect x="332" y="442" width="798" height="72" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+      
+      <!-- Icon -->
+      <rect x="346" y="454" width="48" height="48" rx="8" fill="#064e3b" stroke="#059669" stroke-width="0.8"/>
+      <text x="359" y="485" font-size="20">🤖</text>
+
+      <text x="406" y="469" fill="#f8fafc" font-size="13.5" font-weight="600" class="font-sans">openai_agent.json</text>
+      <!-- Sniffer Badge -->
+      <rect x="548" y="456" width="158" height="20" rx="10" fill="#064e3b" stroke="#047857" stroke-width="0.8"/>
+      <text x="558" y="470" fill="#6ee7b7" font-size="10" font-weight="700" class="font-sans">🤖 ChatGPT / OpenAI Key</text>
+
+      <!-- Sender Badge -->
+      <rect x="714" y="456" width="72" height="20" rx="10" fill="#0f172a" stroke="#334155" stroke-width="0.8"/>
+      <text x="722" y="470" fill="#60a5fa" font-size="10" font-weight="500" class="font-sans">👤 Alice</text>
+
+      <text x="406" y="492" fill="#64748b" font-size="11" class="font-mono">~/.e2e_vault/files/openai_agent.json (sk-proj-... • 512 B)</text>
+
+      <!-- Action Buttons -->
+      <rect x="910" y="462" width="60" height="28" rx="6" fill="#064e3b" stroke="#059669" stroke-width="0.8"/>
+      <text x="922" y="480" fill="#a7f3d0" font-size="11" font-weight="600" class="font-sans">↗ Open</text>
+
+      <rect x="978" y="462" width="68" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="988" y="480" fill="#cbd5e1" font-size="11" class="font-sans">📂 Locate</text>
+
+      <rect x="1054" y="462" width="62" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="1063" y="480" fill="#cbd5e1" font-size="11" class="font-sans">📋 Copy</text>
+
+
+      <!-- File Card 4: server_ssl.crt (Certificate) -->
+      <rect x="332" y="524" width="798" height="72" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+      
+      <!-- Icon -->
+      <rect x="346" y="536" width="48" height="48" rx="8" fill="#164e63" stroke="#0891b2" stroke-width="0.8"/>
+      <text x="359" y="567" font-size="20">📜</text>
+
+      <text x="406" y="551" fill="#f8fafc" font-size="13.5" font-weight="600" class="font-sans">server_ssl.crt</text>
+      <!-- Sniffer Badge -->
+      <rect x="515" y="538" width="138" height="20" rx="10" fill="#164e63" stroke="#0e7490" stroke-width="0.8"/>
+      <text x="525" y="552" fill="#67e8f9" font-size="10" font-weight="700" class="font-sans">📜 SSL / TLS 证书 (Cert)</text>
+
+      <!-- Sender Badge -->
+      <rect x="661" y="538" width="72" height="20" rx="10" fill="#0f172a" stroke="#334155" stroke-width="0.8"/>
+      <text x="669" y="552" fill="#60a5fa" font-size="10" font-weight="500" class="font-sans">👤 Alice</text>
+
+      <text x="406" y="574" fill="#64748b" font-size="11" class="font-mono">~/.e2e_vault/files/server_ssl.crt (1.8 KB)</text>
+
+      <!-- Action Buttons -->
+      <rect x="910" y="544" width="60" height="28" rx="6" fill="#064e3b" stroke="#059669" stroke-width="0.8"/>
+      <text x="922" y="562" fill="#a7f3d0" font-size="11" font-weight="600" class="font-sans">↗ Open</text>
+
+      <rect x="978" y="544" width="68" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="988" y="562" fill="#cbd5e1" font-size="11" class="font-sans">📂 Locate</text>
+
+      <rect x="1054" y="544" width="62" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.8"/>
+      <text x="1063" y="562" fill="#cbd5e1" font-size="11" class="font-sans">📋 Copy</text>
+    </g>
+  </g>
+
+  <!-- Bottom Floating Notification Toast -->
+  <g filter="url(#shadow)">
+    <rect x="740" y="650" width="410" height="60" rx="12" fill="#0b1329" stroke="#3b82f6" stroke-width="1.5"/>
+    <circle cx="765" cy="680" r="14" fill="#1e3a8a"/>
+    <text x="758" y="686" font-size="14">🔐</text>
+    
+    <text x="790" y="674" fill="#93c5fd" font-size="11.5" font-weight="700" class="font-sans">Auto-Decrypted Incoming Secret!</text>
+    <text x="790" y="694" fill="#e2e8f0" font-size="11" class="font-sans">ChatGPT API Key (sk-proj-...) received from Alice</text>
+  </g>
+</svg>
