@@ -48,13 +48,20 @@ export const api = {
     return invoke<VaultItem>('decrypt_file_manual', { e2ePath });
   },
 
-  getVaultItems: async (search?: string, tag?: string): Promise<VaultItem[]> => {
+  getVaultItems: async (
+    search?: string,
+    tag?: string,
+    senderPubkey?: string,
+    brand?: string
+  ): Promise<VaultItem[]> => {
     if (!isTauri()) {
       return [];
     }
     return invoke<VaultItem[]>('get_vault_items', {
       search: search || null,
       tag: tag || null,
+      senderPubkey: senderPubkey || null,
+      brand: brand || null,
     });
   },
 

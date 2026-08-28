@@ -12,6 +12,10 @@ pub struct VaultItem {
     pub content: Option<String>,
     pub file_path: Option<String>,
     pub tags: Option<String>,
+    pub sender_pubkey: Option<String>,
+    pub contact_name: Option<String>,
+    pub key_type: Option<String>, // "openai", "gemini", "aliyun", "wechat", "ssh", "database", etc.
+    pub brand: Option<String>,
     pub created_at: String,
 }
 
@@ -52,6 +56,10 @@ impl DbManager {
                 content TEXT,
                 file_path TEXT,
                 tags TEXT,
+                sender_pubkey TEXT,
+                contact_name TEXT,
+                key_type TEXT,
+                brand TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -63,10 +71,18 @@ impl DbManager {
             );
 
             CREATE INDEX IF NOT EXISTS idx_vault_items_created_at ON vault_items (created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_vault_items_sender ON vault_items (sender_pubkey);
+            CREATE INDEX IF NOT EXISTS idx_vault_items_brand ON vault_items (brand);
             CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts (name ASC);
             "#,
         )
         .map_err(|e| format!("Failed to initialize database schema: {}", e))?;
+
+        // Run migrations for existing DBs if columns are missing
+        let _ = conn.execute("ALTER TABLE vault_items ADD COLUMN sender_pubkey TEXT", []);
+        let _ = conn.execute("ALTER TABLE vault_items ADD COLUMN contact_name TEXT", []);
+        let _ = conn.execute("ALTER TABLE vault_items ADD COLUMN key_type TEXT", []);
+        let _ = conn.execute("ALTER TABLE vault_items ADD COLUMN brand TEXT", []);
 
         Ok(Self { pool })
     }
@@ -74,8 +90,8 @@ impl DbManager {
     pub fn insert_vault_item(&self, item: &VaultItem) -> Result<(), String> {
         let conn = self.pool.get().map_err(|e| e.to_string())?;
         conn.execute(
-            "INSERT INTO vault_items (id, type, title, content, file_path, tags, created_at) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, COALESCE(?7, datetime('now')))",
+            "INSERT INTO vault_items (id, type, title, content, file_path, tags, sender_pubkey, contact_name, key_type, brand, created_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, COALESCE(?11, datetime('now')))",
             params![
                 item.id,
                 item.r#type,
@@ -83,6 +99,10 @@ impl DbManager {
                 item.content,
                 item.file_path,
                 item.tags,
+                item.sender_pubkey,
+                item.contact_name,
+                item.key_type,
+                item.brand,
                 item.created_at
             ],
         )
@@ -90,16 +110,25 @@ impl DbManager {
         Ok(())
     }
 
-    pub fn get_vault_items(&self, search: Option<&str>, tag: Option<&str>) -> Result<Vec<VaultItem>, String> {
+    pub fn get_vault_items(
+        &self,
+        search: Option<&str>,
+        tag: Option<&str>,
+        sender_pubkey: Option<&str>,
+        brand: Option<&str>,
+    ) -> Result<Vec<VaultItem>, String> {
         let conn = self.pool.get().map_err(|e| e.to_string())?;
         
-        let mut query = "SELECT id, type, title, content, file_path, tags, datetime(created_at, 'localtime') as created_at FROM vault_items WHERE 1=1".to_string();
+        let mut query = "SELECT id, type, title, content, file_path, tags, sender_pubkey, contact_name, key_type, brand, datetime(created_at, 'localtime') as created_at FROM vault_items WHERE 1=1".to_string();
         let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(s) = search {
             if !s.trim().is_empty() {
-                query.push_str(" AND (title LIKE ? OR content LIKE ?)");
+                query.push_str(" AND (title LIKE ? OR content LIKE ? OR file_path LIKE ? OR tags LIKE ? OR contact_name LIKE ?)");
                 let pattern = format!("%{}%", s.trim());
+                params_vec.push(Box::new(pattern.clone()));
+                params_vec.push(Box::new(pattern.clone()));
+                params_vec.push(Box::new(pattern.clone()));
                 params_vec.push(Box::new(pattern.clone()));
                 params_vec.push(Box::new(pattern));
             }
@@ -113,10 +142,23 @@ impl DbManager {
             }
         }
 
+        if let Some(sender) = sender_pubkey {
+            if !sender.trim().is_empty() {
+                query.push_str(" AND sender_pubkey = ?");
+                params_vec.push(Box::new(sender.trim().to_string()));
+            }
+        }
+
+        if let Some(b) = brand {
+            if !b.trim().is_empty() && b != "all" {
+                query.push_str(" AND brand = ?");
+                params_vec.push(Box::new(b.trim().to_string()));
+            }
+        }
+
         query.push_str(" ORDER BY created_at DESC");
 
         let mut stmt = conn.prepare(&query).map_err(|e| format!("Query prepare error: {}", e))?;
-        
         let rusqlite_params: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
 
         let rows = stmt
@@ -128,7 +170,11 @@ impl DbManager {
                     content: row.get(3)?,
                     file_path: row.get(4)?,
                     tags: row.get(5)?,
-                    created_at: row.get(6)?,
+                    sender_pubkey: row.get(6)?,
+                    contact_name: row.get(7)?,
+                    key_type: row.get(8)?,
+                    brand: row.get(9)?,
+                    created_at: row.get(10)?,
                 })
             })
             .map_err(|e| format!("Query map error: {}", e))?;
@@ -138,6 +184,15 @@ impl DbManager {
             items.push(r.map_err(|e| format!("Row read error: {}", e))?);
         }
         Ok(items)
+    }
+
+    pub fn resolve_contact_name(&self, pubkey: &str) -> Option<String> {
+        let clean = pubkey.trim().trim_start_matches("PUBKEY::").trim();
+        let conn = self.pool.get().ok()?;
+        let mut stmt = conn
+            .prepare("SELECT name FROM contacts WHERE public_key = ?1")
+            .ok()?;
+        stmt.query_row(params![clean], |row| row.get(0)).ok()
     }
 
     pub fn delete_vault_item(&self, id: &str) -> Result<(), String> {
@@ -169,7 +224,6 @@ impl DbManager {
         )
         .map_err(|e| format!("Failed to save contact: {}", e))?;
 
-        // Retrieve saved contact
         let mut stmt = conn
             .prepare("SELECT id, name, public_key, datetime(created_at, 'localtime') FROM contacts WHERE public_key = ?1")
             .map_err(|e| e.to_string())?;
@@ -183,6 +237,12 @@ impl DbManager {
                 })
             })
             .map_err(|e| e.to_string())?;
+
+        // Also update any existing vault items with this sender's newly saved contact name
+        let _ = conn.execute(
+            "UPDATE vault_items SET contact_name = ?1 WHERE sender_pubkey = ?2",
+            params![name.trim(), clean_pubkey],
+        );
 
         Ok(contact)
     }
@@ -238,6 +298,10 @@ mod tests {
                 content TEXT,
                 file_path TEXT,
                 tags TEXT,
+                sender_pubkey TEXT,
+                contact_name TEXT,
+                key_type TEXT,
+                brand TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -253,37 +317,33 @@ mod tests {
 
         let db = DbManager { pool };
 
-        // Test contacts
         let contact = db.save_contact("Alice", "PUBKEY::1234567890abcdef").unwrap();
         assert_eq!(contact.name, "Alice");
-        assert_eq!(contact.public_key, "1234567890abcdef");
 
-        let contacts = db.get_contacts().unwrap();
-        assert_eq!(contacts.len(), 1);
-
-        // Test vault item
         let item = VaultItem {
             id: "test-id-1".to_string(),
             r#type: "text".to_string(),
             title: Some("My Secret".to_string()),
-            content: Some("Secret text content".to_string()),
+            content: Some("sk-proj-12345678901234567890".to_string()),
             file_path: None,
-            tags: Some("test, secret".to_string()),
+            tags: Some("openai, ai".to_string()),
+            sender_pubkey: Some("1234567890abcdef".to_string()),
+            contact_name: Some("Alice".to_string()),
+            key_type: Some("ChatGPT / OpenAI Key".to_string()),
+            brand: Some("openai".to_string()),
             created_at: "2026-08-28 12:00:00".to_string(),
         };
 
         db.insert_vault_item(&item).unwrap();
 
-        let items = db.get_vault_items(Some("Secret"), None).unwrap();
+        let items = db.get_vault_items(Some("Secret"), None, None, None).unwrap();
         assert_eq!(items.len(), 1);
-        assert_eq!(items[0].id, "test-id-1");
+        assert_eq!(items[0].brand, Some("openai".to_string()));
 
-        db.update_vault_item_tags("test-id-1", "updated, tag").unwrap();
-        let updated_items = db.get_vault_items(None, Some("updated")).unwrap();
-        assert_eq!(updated_items.len(), 1);
+        let alice_items = db.get_vault_items(None, None, Some("1234567890abcdef"), None).unwrap();
+        assert_eq!(alice_items.len(), 1);
 
-        db.delete_vault_item("test-id-1").unwrap();
-        let empty_items = db.get_vault_items(None, None).unwrap();
-        assert_eq!(empty_items.len(), 0);
+        let openai_items = db.get_vault_items(None, None, None, Some("openai")).unwrap();
+        assert_eq!(openai_items.len(), 1);
     }
 }

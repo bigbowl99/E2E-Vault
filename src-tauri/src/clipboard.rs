@@ -1,5 +1,6 @@
 use crate::crypto::{CryptoManager, PUBKEY_PREFIX, SECURE_PREFIX};
 use crate::db::{DbManager, VaultItem};
+use crate::sniffer;
 use arboard::Clipboard;
 use serde::Serialize;
 use std::sync::Arc;
@@ -23,7 +24,6 @@ pub fn start_clipboard_monitor(
         log::info!("Starting background clipboard listener daemon...");
         let mut last_clipboard_text = String::new();
 
-        // Safe loop with error recovery for clipboard
         loop {
             thread::sleep(Duration::from_millis(600));
 
@@ -48,8 +48,28 @@ pub fn start_clipboard_monitor(
             if current_text.starts_with(SECURE_PREFIX) {
                 log::info!("Detected [SECURE]:: in clipboard. Attempting decryption...");
                 match crypto.decrypt_text(&current_text) {
-                    Ok(decrypted_text) => {
-                        let preview = if decrypted_text.chars().count() > 40 {
+                    Ok((decrypted_text, sender_pubkey)) => {
+                        // 1. Sniff Key patterns
+                        let sniffed_list = sniffer::sniff_content(&decrypted_text, None);
+                        let primary_sniff = sniffed_list.first();
+                        
+                        let brand = primary_sniff.map(|s| s.brand.clone());
+                        let key_type = primary_sniff.map(|s| s.label.clone());
+
+                        let mut tags_vec = vec!["received".to_string(), "auto".to_string()];
+                        for s in &sniffed_list {
+                            tags_vec.push(s.brand.clone());
+                        }
+                        let tags = tags_vec.join(", ");
+
+                        // 2. Resolve contact name
+                        let contact_name = sender_pubkey
+                            .as_deref()
+                            .and_then(|pk| db.resolve_contact_name(pk));
+
+                        let preview = if let Some(ref s) = primary_sniff {
+                            format!("{}: {}", s.label, s.snippet.as_deref().unwrap_or("••••"))
+                        } else if decrypted_text.chars().count() > 40 {
                             format!("{}...", decrypted_text.chars().take(40).collect::<String>())
                         } else {
                             decrypted_text.clone()
@@ -58,10 +78,14 @@ pub fn start_clipboard_monitor(
                         let item = VaultItem {
                             id: uuid::Uuid::new_v4().to_string(),
                             r#type: "text".to_string(),
-                            title: Some(preview),
+                            title: Some(preview.clone()),
                             content: Some(decrypted_text.clone()),
                             file_path: None,
-                            tags: Some("received, auto".to_string()),
+                            tags: Some(tags),
+                            sender_pubkey,
+                            contact_name: contact_name.clone(),
+                            key_type,
+                            brand,
                             created_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                         };
 
@@ -73,11 +97,20 @@ pub fn start_clipboard_monitor(
                         let _ = app_handle.emit("vault-item-received", &item);
 
                         // Trigger desktop OS notification
+                        let notif_sender = contact_name
+                            .as_deref()
+                            .unwrap_or("Someone");
+                        let notif_title = if let Some(ref b) = item.key_type {
+                            format!("🔐 [{}] Received from {}", b, notif_sender)
+                        } else {
+                            format!("🔐 Message Decrypted from {}", notif_sender)
+                        };
+
                         let _ = app_handle
                             .notification()
                             .builder()
-                            .title("🔐 E2E Decrypted Message")
-                            .body(&format!("Decrypted: {}", item.title.unwrap_or_default()))
+                            .title(&notif_title)
+                            .body(&format!("{}", preview))
                             .show();
                     }
                     Err(e) => {
@@ -94,7 +127,6 @@ pub fn start_clipboard_monitor(
                     .to_string();
 
                 let my_pub = crypto.get_identity().public_key;
-                // Avoid notifying if it's our own public key
                 if clean_key != my_pub {
                     let payload = PubKeyDetectedPayload {
                         public_key: clean_key,
@@ -106,8 +138,8 @@ pub fn start_clipboard_monitor(
                     let _ = app_handle
                         .notification()
                         .builder()
-                        .title("🔑 New Public Key Detected")
-                        .body("A partner's public key was copied. Click to save contact.")
+                        .title("🔑 New Partner Public Key Detected")
+                        .body("Partner's public key was copied from WeChat. Click to save contact.")
                         .show();
                 }
             }

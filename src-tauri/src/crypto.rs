@@ -30,6 +30,15 @@ pub struct StoredIdentity {
 pub struct FilePayload {
     pub filename: String,
     pub data: Vec<u8>,
+    #[serde(default)]
+    pub sender_pubkey: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TextPayload {
+    pub text: String,
+    #[serde(default)]
+    pub sender_pubkey: Option<String>,
 }
 
 pub struct CryptoManager {
@@ -107,11 +116,7 @@ impl CryptoManager {
     fn derive_aes_key(shared_secret: &[u8]) -> Key<Aes256Gcm> {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::Hasher;
-        // Derive 32-byte key using double hashing / standard mix
-        // Or standard SHA-256 (32 bytes)
         let mut key_bytes = [0u8; 32];
-        // Standard SHA256 simulation with 2x 128bit or dalek/aes key derivation
-        // Simple and robust SHA256-like expansion:
         let mut hasher1 = DefaultHasher::new();
         hasher1.write(b"E2E-VAULT-KEY-DERIVATION-A");
         hasher1.write(shared_secret);
@@ -137,7 +142,6 @@ impl CryptoManager {
         key_bytes[16..24].copy_from_slice(&h3);
         key_bytes[24..32].copy_from_slice(&h4);
 
-        // Mix directly with raw shared_secret
         for i in 0..32 {
             key_bytes[i] ^= shared_secret[i];
         }
@@ -165,6 +169,13 @@ impl CryptoManager {
     pub fn encrypt_text(&self, plaintext: &str, recipient_pubkey: &str) -> Result<String, String> {
         let recipient_key = Self::parse_public_key(recipient_pubkey)?;
         
+        let payload_obj = TextPayload {
+            text: plaintext.to_string(),
+            sender_pubkey: Some(self.get_identity().public_key),
+        };
+        let payload_bytes = serde_json::to_vec(&payload_obj)
+            .map_err(|e| format!("Failed to serialize text payload: {}", e))?;
+
         // Generate ephemeral keypair
         let ephemeral_secret = StaticSecret::random_from_rng(OsRng);
         let ephemeral_public = PublicKey::from(&ephemeral_secret);
@@ -179,7 +190,7 @@ impl CryptoManager {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher
-            .encrypt(nonce, plaintext.as_bytes())
+            .encrypt(nonce, payload_bytes.as_slice())
             .map_err(|e| format!("Encryption error: {}", e))?;
 
         // Package: [32 bytes Ephemeral PubKey] + [12 bytes Nonce] + [Ciphertext + Tag]
@@ -192,8 +203,8 @@ impl CryptoManager {
         Ok(format!("{}{}", SECURE_PREFIX, b64))
     }
 
-    /// Decrypts armored secure string `[SECURE]::[Base64]`
-    pub fn decrypt_text(&self, armored: &str) -> Result<String, String> {
+    /// Decrypts armored secure string `[SECURE]::[Base64]` -> returns (plaintext, sender_pubkey)
+    pub fn decrypt_text(&self, armored: &str) -> Result<(String, Option<String>), String> {
         let clean = armored
             .trim()
             .trim_start_matches(SECURE_PREFIX)
@@ -223,7 +234,15 @@ impl CryptoManager {
             .decrypt(nonce, ciphertext)
             .map_err(|e| format!("Decryption failed (corrupt data or wrong recipient key): {}", e))?;
 
-        String::from_utf8(decrypted).map_err(|e| format!("Decrypted bytes not valid UTF-8: {}", e))
+        // Try JSON deserialization first (new format with sender_pubkey)
+        if let Ok(text_payload) = serde_json::from_slice::<TextPayload>(&decrypted) {
+            return Ok((text_payload.text, text_payload.sender_pubkey));
+        }
+
+        // Fallback for raw UTF-8 string
+        let raw_str = String::from_utf8(decrypted)
+            .map_err(|e| format!("Decrypted bytes not valid UTF-8: {}", e))?;
+        Ok((raw_str, None))
     }
 
     /// Encrypts a file (<100MB) for recipient, producing a `.e2e` file in temp directory
@@ -250,6 +269,7 @@ impl CryptoManager {
         let payload_obj = FilePayload {
             filename: filename.clone(),
             data: file_bytes,
+            sender_pubkey: Some(self.get_identity().public_key),
         };
 
         let payload_bytes = serde_json::to_vec(&payload_obj)
@@ -416,10 +436,10 @@ mod tests {
         let encrypted = alice_mgr.encrypt_text(secret_message, &bob_pub_b64).unwrap();
         assert!(encrypted.starts_with(SECURE_PREFIX));
 
-        let decrypted = bob_mgr.decrypt_text(&encrypted).unwrap();
+        let (decrypted, sender) = bob_mgr.decrypt_text(&encrypted).unwrap();
         assert_eq!(decrypted, secret_message);
+        assert_eq!(sender, Some(alice_mgr.get_identity().public_key));
 
-        // Alice cannot decrypt Bob's message (as it was encrypted specifically for Bob)
         let alice_decrypt_result = alice_mgr.decrypt_text(&encrypted);
         assert!(alice_decrypt_result.is_err());
     }
@@ -461,9 +481,9 @@ mod tests {
         let (payload, saved_path) = bob_mgr.decrypt_file(&encrypted_file_path).unwrap();
         assert_eq!(payload.filename, "db_root.pem");
         assert_eq!(payload.data, test_content);
+        assert_eq!(payload.sender_pubkey, Some(alice_mgr.get_identity().public_key));
         assert!(saved_path.exists());
 
-        // Clean up
         let _ = fs::remove_dir_all(&temp_dir);
     }
 }

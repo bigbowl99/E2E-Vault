@@ -2,6 +2,7 @@ pub mod clipboard;
 pub mod commands;
 pub mod crypto;
 pub mod db;
+pub mod sniffer;
 
 use commands::AppState;
 use crypto::CryptoManager;
@@ -26,24 +27,52 @@ fn handle_e2e_file_path(app: &AppHandle, file_path_str: &str) {
     let state = app.state::<AppState>();
     match state.crypto.decrypt_file(path) {
         Ok((payload, target_path)) => {
+            let sample_text = String::from_utf8(payload.data.clone()).unwrap_or_default();
+            let sniffed_list = sniffer::sniff_content(&sample_text, Some(&payload.filename));
+            let primary_sniff = sniffed_list.first();
+            let brand = primary_sniff.map(|s| s.brand.clone());
+            let key_type = primary_sniff.map(|s| s.label.clone());
+
+            let mut tags_vec = vec!["file".to_string(), "received".to_string(), "e2e-launch".to_string()];
+            for s in &sniffed_list {
+                tags_vec.push(s.brand.clone());
+            }
+            let tags = tags_vec.join(", ");
+
+            let contact_name = payload
+                .sender_pubkey
+                .as_deref()
+                .and_then(|pk| state.db.resolve_contact_name(pk));
+
             let item = VaultItem {
                 id: uuid::Uuid::new_v4().to_string(),
                 r#type: "file".to_string(),
                 title: Some(payload.filename.clone()),
                 content: None,
                 file_path: Some(target_path.to_string_lossy().to_string()),
-                tags: Some("file, received, e2e-launch".to_string()),
+                tags: Some(tags),
+                sender_pubkey: payload.sender_pubkey,
+                contact_name: contact_name.clone(),
+                key_type,
+                brand,
                 created_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
             };
 
             let _ = state.db.insert_vault_item(&item);
             let _ = app.emit("vault-item-received", &item);
 
+            let notif_sender = contact_name.as_deref().unwrap_or("Partner");
+            let notif_body = if let Some(ref k) = item.key_type {
+                format!("Saved '{}' [{}] from {}", payload.filename, k, notif_sender)
+            } else {
+                format!("Saved '{}' to your vault folder", payload.filename)
+            };
+
             let _ = app
                 .notification()
                 .builder()
-                .title("📁 File Decrypted & Saved")
-                .body(&format!("Saved '{}' to your vault folder", payload.filename))
+                .title("📁 Encrypted File Decrypted & Organized")
+                .body(&notif_body)
                 .show();
         }
         Err(e) => {
@@ -76,7 +105,6 @@ pub fn run() {
                 let _ = window.set_focus();
             }
 
-            // Check if any argument is an .e2e file path
             for arg in &args {
                 if arg.ends_with(".e2e") {
                     handle_e2e_file_path(app, arg);
@@ -160,7 +188,7 @@ pub fn run() {
             // 3. Start background clipboard daemon
             clipboard::start_clipboard_monitor(app_handle.clone(), crypto, db);
 
-            // 4. Handle initial CLI args (e.g. cold start with double-clicked .e2e file)
+            // 4. Handle initial CLI args
             let args: Vec<String> = std::env::args().collect();
             for arg in args.into_iter().skip(1) {
                 if arg.ends_with(".e2e") {
@@ -172,7 +200,6 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                // Prevent exit on close, minimize to system tray daemon instead
                 api.prevent_close();
                 let _ = window.hide();
             }

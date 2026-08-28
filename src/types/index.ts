@@ -10,6 +10,10 @@ export interface VaultItem {
   content: string | null;
   file_path: string | null;
   tags: string | null;
+  sender_pubkey?: string | null;
+  contact_name?: string | null;
+  key_type?: string | null;
+  brand?: string | null;
   created_at: string;
 }
 

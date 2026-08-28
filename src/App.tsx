@@ -16,6 +16,7 @@ export const App: React.FC = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [activeTab, setActiveTab] = useState<'text' | 'file' | 'vault'>('text');
+  const [selectedContactFilter, setSelectedContactFilter] = useState<string | null>(null);
 
   // Modal & Notifications
   const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
@@ -33,7 +34,6 @@ export const App: React.FC = () => {
     }, 3000);
   };
 
-  // Initial data loading
   const loadData = async () => {
     try {
       const [ident, contactList, items] = await Promise.all([
@@ -56,14 +56,12 @@ export const App: React.FC = () => {
     loadData();
 
     if (isTauri()) {
-      // 1. Listen for real-time auto-decrypted items from clipboard monitor or .e2e file open
       const unlistenItemPromise = listen<VaultItem>('vault-item-received', (event) => {
         const item = event.payload;
         setVaultItems((prev) => [item, ...prev.filter((i) => i.id !== item.id)]);
         setReceivedItem(item);
       });
 
-      // 2. Listen for partner PUBKEY:: detected in clipboard
       const unlistenPubKeyPromise = listen<PubKeyDetectedPayload>('pubkey-detected', (event) => {
         const payload = event.payload;
         setDetectedPubKey(payload);
@@ -110,6 +108,8 @@ export const App: React.FC = () => {
       }
       return [...prev, contact];
     });
+    // refresh vault items to update contact names
+    api.getVaultItems().then(setVaultItems);
   };
 
   const handleDeleteContact = async (id: string) => {
@@ -180,7 +180,7 @@ export const App: React.FC = () => {
             }`}
           >
             <Database className="w-4 h-4" />
-            <span>Vault SQLite Storage ({vaultItems.length})</span>
+            <span>Vault & File Timeline ({vaultItems.length})</span>
           </button>
         </div>
 
@@ -194,13 +194,15 @@ export const App: React.FC = () => {
               onItemAdded={handleItemAdded}
               onToast={showToast}
             />
-            {/* Quick Vault preview at bottom */}
             <div className="pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-vault-400 mb-3">
-                Recent Vault Items
+                Recent Decrypted & Encrypted Keys
               </h3>
               <VaultList
                 items={vaultItems}
+                contacts={contacts}
+                selectedContactFilter={selectedContactFilter}
+                onSelectContactFilter={setSelectedContactFilter}
                 onDeleteItem={handleDeleteItem}
                 onUpdateTags={handleUpdateTags}
                 onToast={showToast}
@@ -220,10 +222,13 @@ export const App: React.FC = () => {
             />
             <div className="pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-vault-400 mb-3">
-                Decrypted & Stored Files
+                Organized Files Timeline
               </h3>
               <VaultList
                 items={vaultItems.filter((i) => i.type === 'file')}
+                contacts={contacts}
+                selectedContactFilter={selectedContactFilter}
+                onSelectContactFilter={setSelectedContactFilter}
                 onDeleteItem={handleDeleteItem}
                 onUpdateTags={handleUpdateTags}
                 onToast={showToast}
@@ -235,6 +240,9 @@ export const App: React.FC = () => {
         {activeTab === 'vault' && (
           <VaultList
             items={vaultItems}
+            contacts={contacts}
+            selectedContactFilter={selectedContactFilter}
+            onSelectContactFilter={setSelectedContactFilter}
             onDeleteItem={handleDeleteItem}
             onUpdateTags={handleUpdateTags}
             onToast={showToast}
