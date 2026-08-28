@@ -130,6 +130,7 @@ pub fn run() {
             commands::copy_to_clipboard,
             commands::show_in_folder,
             commands::open_file,
+            commands::open_vault_folder,
             commands::exit_app,
         ])
         .setup(move |app| {

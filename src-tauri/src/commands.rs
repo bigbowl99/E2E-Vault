@@ -319,6 +319,12 @@ pub fn open_file(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn open_vault_folder(state: State<'_, AppState>) -> Result<(), String> {
+    let dir = state.crypto.get_files_dir();
+    open::that(dir).map_err(|e| format!("Failed to open vault folder: {}", e))
+}
+
+#[tauri::command]
 pub fn exit_app(app: tauri::AppHandle) {
     use tauri::Manager;
     for (_, win) in app.webview_windows() {

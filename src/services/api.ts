@@ -104,6 +104,10 @@ export const api = {
     return invoke<void>('open_file', { path });
   },
 
+  openVaultFolder: async (): Promise<void> => {
+    return invoke<void>('open_vault_folder');
+  },
+
   exitApp: async (): Promise<void> => {
     if (isTauri()) {
       return invoke<void>('exit_app');

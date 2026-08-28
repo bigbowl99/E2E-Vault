@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { Shield, FileUp, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Shield, FileUp, Database, AlertTriangle, CheckCircle2, FolderTree } from 'lucide-react';
 import type { Contact, Identity, PubKeyDetectedPayload, VaultItem } from './types';
 import { api, isTauri } from './services/api';
 import { Header } from './components/Header';
 import { TextVault } from './components/TextVault';
 import { FileVault } from './components/FileVault';
+import { FileOrganizer } from './components/FileOrganizer';
 import { VaultList } from './components/VaultList';
 import { ContactsModal } from './components/ContactsModal';
 import { NotificationBanner } from './components/NotificationBanner';
@@ -15,7 +16,7 @@ export const App: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'vault'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'organizer' | 'vault'>('organizer');
   const [selectedContactFilter, setSelectedContactFilter] = useState<string | null>(null);
 
   // Modal & Notifications
@@ -108,7 +109,6 @@ export const App: React.FC = () => {
       }
       return [...prev, contact];
     });
-    // refresh vault items to update contact names
     api.getVaultItems().then(setVaultItems);
   };
 
@@ -124,6 +124,8 @@ export const App: React.FC = () => {
       showToast('Failed to delete contact', 'error');
     }
   };
+
+  const fileItemsCount = vaultItems.filter((i) => i.type === 'file').length;
 
   return (
     <div className="min-h-screen bg-vault-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
@@ -146,12 +148,24 @@ export const App: React.FC = () => {
       {/* Main Content & Tabs */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-5 md:p-6 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-vault-800 pb-3">
+        <div className="flex items-center gap-2 border-b border-vault-800 pb-3 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('organizer')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0 ${
+              activeTab === 'organizer'
+                ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                : 'text-vault-400 hover:text-slate-200 hover:bg-vault-900'
+            }`}
+          >
+            <FolderTree className="w-4 h-4" />
+            <span>File Organizer & Archive ({fileItemsCount})</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('text')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0 ${
               activeTab === 'text'
-                ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
                 : 'text-vault-400 hover:text-slate-200 hover:bg-vault-900'
             }`}
           >
@@ -161,30 +175,39 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('file')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0 ${
               activeTab === 'file'
                 ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
                 : 'text-vault-400 hover:text-slate-200 hover:bg-vault-900'
             }`}
           >
             <FileUp className="w-4 h-4" />
-            <span>File Transfer (.e2e)</span>
+            <span>Package .e2e File</span>
           </button>
 
           <button
             onClick={() => setActiveTab('vault')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition shrink-0 ${
               activeTab === 'vault'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30'
                 : 'text-vault-400 hover:text-slate-200 hover:bg-vault-900'
             }`}
           >
             <Database className="w-4 h-4" />
-            <span>Vault & File Timeline ({vaultItems.length})</span>
+            <span>All Vault History ({vaultItems.length})</span>
           </button>
         </div>
 
         {/* Tab Views */}
+        {activeTab === 'organizer' && (
+          <FileOrganizer
+            items={vaultItems}
+            contacts={contacts}
+            onDeleteItem={handleDeleteItem}
+            onToast={showToast}
+          />
+        )}
+
         {activeTab === 'text' && (
           <div className="space-y-6">
             <TextVault
@@ -222,7 +245,7 @@ export const App: React.FC = () => {
             />
             <div className="pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-vault-400 mb-3">
-                Organized Files Timeline
+                Quick File Timeline
               </h3>
               <VaultList
                 items={vaultItems.filter((i) => i.type === 'file')}
