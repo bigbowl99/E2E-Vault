@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Copy, Check, Users, KeyRound, Radio, Power } from 'lucide-react';
+import { ShieldCheck, Copy, Check, Users, KeyRound, Radio, Power, Link } from 'lucide-react';
 import type { Contact, Identity } from '../types';
 import { api } from '../services/api';
+import { createPairingLink } from '../services/shareLink';
 
 interface HeaderProps {
   identity: Identity | null;
@@ -20,13 +21,22 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenContactsModal,
   onCopyText,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCopyMyKey = () => {
     if (!identity) return;
     onCopyText(identity.armored_pubkey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2000);
+  };
+
+  const handleCopyPairLink = () => {
+    if (!identity) return;
+    const pairUrl = createPairingLink('My Vault', identity.public_key);
+    onCopyText(pairUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const handleQuit = async () => {
@@ -55,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Action Badges & Partner Selector */}
-      <div className="flex items-center flex-wrap gap-3">
+      <div className="flex items-center flex-wrap gap-2.5">
         {/* Recipient Selector */}
         <div className="flex items-center gap-2 bg-vault-950/80 border border-vault-800 rounded-lg px-3 py-1.5">
           <span className="text-xs text-vault-400 font-medium">Partner:</span>
@@ -91,16 +101,32 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        {/* Copy My Pubkey */}
+        {/* 1-Click Invite Link (Cloudflare trans.themitta.com) */}
+        <button
+          onClick={handleCopyPairLink}
+          disabled={!identity}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-950/70 hover:bg-blue-900/80 text-blue-300 border border-blue-800/80 text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
+          title="Copy 1-Click Pairing Link (trans.themitta.com/pair#...) for WeChat"
+        >
+          <Link className="w-3.5 h-3.5 text-blue-400" />
+          <span>1-Click Invite Link</span>
+          {copiedLink ? (
+            <Check className="w-3.5 h-3.5 text-blue-400 animate-in zoom-in" />
+          ) : (
+            <Copy className="w-3.5 h-3.5 opacity-70" />
+          )}
+        </button>
+
+        {/* Copy Raw Pubkey */}
         <button
           onClick={handleCopyMyKey}
           disabled={!identity}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/80 text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/80 text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
           title="Click to copy your public key (PUBKEY::...) for WeChat"
         >
           <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Export My Public Key</span>
-          {copied ? (
+          <span>Export PubKey</span>
+          {copiedKey ? (
             <Check className="w-3.5 h-3.5 text-emerald-400 animate-in zoom-in" />
           ) : (
             <Copy className="w-3.5 h-3.5 opacity-70" />

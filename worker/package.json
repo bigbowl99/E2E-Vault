@@ -1,0 +1,14 @@
+{
+  "name": "e2e-vault-worker",
+  "version": "0.1.0",
+  "description": "Zero-Knowledge Link Bridge for E2E-Vault on Cloudflare Workers",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": ["e2ee", "vault", "cloudflare-worker", "zero-knowledge"],
+  "author": "bigbowl99",
+  "license": "MIT"
+}
