@@ -1,14 +1,13 @@
 name = "e2e-vault-worker"
 main = "src/index.js"
 compatibility_date = "2024-09-01"
+workers_dev = true
 
 # Custom Domain on Cloudflare
 routes = [
-  { pattern = "trans.themitta.com/*", zone_name = "themitta.com", custom_domain = true }
+  { pattern = "trans.themitta.com", custom_domain = true }
 ]
 
-# KV Storage for temporary zero-knowledge ciphertext blobs
-# Run `npx wrangler kv namespace create VAULT_KV` to get the namespace ID
 [[kv_namespaces]]
 binding = "VAULT_KV"
-id = "VAULT_KV_PLACEHOLDER"
+id = "640c7371e5bb46719eb8ea455f325e22"
