@@ -22,10 +22,13 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-13'
+          - platform: 'macos-latest'
+            target: 'x86_64-apple-darwin'
             args: '--target x86_64-apple-darwin'
           - platform: 'windows-latest'
+            target: ''
             args: ''
 
     runs-on: ${{ matrix.platform }}
@@ -42,7 +45,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -57,9 +60,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: 'E2E-Vault v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v__VERSION__' }}
+          releaseName: 'E2E-Vault ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}'
+          releaseBody: 'See the assets below to download and install E2E-Vault for macOS and Windows.'
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
@@ -67,7 +70,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: E2E-Vault-${{ matrix.platform }}-${{ strategy.job-index }}
+          name: E2E-Vault-${{ matrix.platform }}-${{ matrix.target || 'x64' }}
           path: |
             src-tauri/target/**/bundle/dmg/*.dmg
             src-tauri/target/**/bundle/nsis/*.exe
